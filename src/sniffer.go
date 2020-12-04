@@ -32,14 +32,14 @@ func handlePacket(packet gopacket.Packet, send Send) {
 	if tcpLayer := ethernetFrame.Layer(layers.LayerTypeTCP); tcpLayer != nil {
 		srcAddr, dstAddr := extractIpAddresses(ethernetFrame)
 		tcp, _ := tcpLayer.(*layers.TCP)
-		options := make([]string, 0)
-		for idx, opt := range tcp.Options {
+		var options []string
+		for _, opt := range tcp.Options {
 			if opt.OptionType == MPTCPOptionKind {
 				mptcpOptionStr := hex.EncodeToString(opt.OptionData)
-				options[idx] = mptcpOptionStr
+				options = append(options, mptcpOptionStr)
 			}
 		}
-		if len(options) > 0 {
+		if options != nil && len(options) > 0 {
 			message := createMessage(srcAddr, dstAddr, tcp.SrcPort, tcp.DstPort, options)
 			send(message)
 		}
