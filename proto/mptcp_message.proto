@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package main;
+
+option go_package = "github.com/protobuf/types/mptcp";
+
+
+message MPTCPMessage {
+  string srcAddr = 1;
+  string dstAddr = 2;
+
+  uint32 srcPort = 3;
+  uint32 dstPort = 4;
+
+  repeated string mptcpOptions = 5;
+}
