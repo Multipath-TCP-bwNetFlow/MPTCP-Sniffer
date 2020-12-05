@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -35,8 +34,9 @@ func handlePacket(packet gopacket.Packet, send Send) {
 		var options []string
 		for _, opt := range tcp.Options {
 			if opt.OptionType == MPTCPOptionKind {
-				mptcpOptionStr := hex.EncodeToString(opt.OptionData)
-				options = append(options, mptcpOptionStr)
+				if decoded := decodeMPTCPOptions(opt); decoded != "" {
+					options = append(options, decoded)
+				}
 			}
 		}
 		if options != nil && len(options) > 0 {
@@ -71,4 +71,22 @@ func createMessage(srcAdr, dstAdr string, srcPort, dstPort layers.TCPPort, optio
 	message.DstPort = uint32(dstPort)
 	message.MptcpOptions = options
 	return message
+}
+
+// according to rfc6824
+func decodeMPTCPOptions(option layers.TCPOption) string {
+	firstByte := option.OptionData[0]
+	masked := firstByte & 0xF0
+	switch masked {
+	case 0x00: return "MP_CAPABLE"
+	case 0x10: return "MP_JOIN"
+	case 0x20: return"DSS"
+	case 0x30: return"ADD_ADDR"
+	case 0x40: return"REMOVE_ADDR"
+	case 0x50: return"MP_PRIO"
+	case 0x60: return"MP_FAIL"
+	case 0x70: return"MP_FASTCLOSE"
+	default:
+		return ""
+	}
 }
