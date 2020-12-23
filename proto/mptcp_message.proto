@@ -12,5 +12,7 @@ message MPTCPMessage {
   uint32 srcPort = 3;
   uint32 dstPort = 4;
 
-  repeated string mptcpOptions = 5;
+  uint32 seqNum = 5;
+
+  repeated string mptcpOptions = 6;
 }

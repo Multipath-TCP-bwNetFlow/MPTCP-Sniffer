@@ -40,7 +40,7 @@ func handlePacket(packet gopacket.Packet, send Send) {
 			}
 		}
 		if options != nil && len(options) > 0 {
-			message := createMessage(srcAddr, dstAddr, tcp.SrcPort, tcp.DstPort, options)
+			message := createMessage(srcAddr, dstAddr, tcp.SrcPort, tcp.DstPort, tcp.Seq, options)
 			send(message)
 		}
 	}
@@ -63,12 +63,13 @@ func extractIpAddresses(ethernetFrame gopacket.Packet) (string, string) {
 	return srcAddr, srcDst
 }
 
-func createMessage(srcAdr, dstAdr string, srcPort, dstPort layers.TCPPort, options []string) *mptcp.MPTCPMessage {
+func createMessage(srcAdr, dstAdr string, srcPort, dstPort layers.TCPPort, seqNum uint32, options []string) *mptcp.MPTCPMessage {
 	message := &mptcp.MPTCPMessage{}
 	message.SrcAddr = srcAdr
 	message.DstAddr = dstAdr
 	message.SrcPort = uint32(srcPort)
 	message.DstPort = uint32(dstPort)
+	message.SeqNum = seqNum
 	message.MptcpOptions = options
 	return message
 }
@@ -78,14 +79,22 @@ func decodeMPTCPOptions(option layers.TCPOption) string {
 	firstByte := option.OptionData[0]
 	masked := firstByte & 0xF0
 	switch masked {
-	case 0x00: return "MP_CAPABLE"
-	case 0x10: return "MP_JOIN"
-	case 0x20: return"DSS"
-	case 0x30: return"ADD_ADDR"
-	case 0x40: return"REMOVE_ADDR"
-	case 0x50: return"MP_PRIO"
-	case 0x60: return"MP_FAIL"
-	case 0x70: return"MP_FASTCLOSE"
+	case 0x00:
+		return "MP_CAPABLE"
+	case 0x10:
+		return "MP_JOIN"
+	case 0x20:
+		return "DSS"
+	case 0x30:
+		return "ADD_ADDR"
+	case 0x40:
+		return "REMOVE_ADDR"
+	case 0x50:
+		return "MP_PRIO"
+	case 0x60:
+		return "MP_FAIL"
+	case 0x70:
+		return "MP_FASTCLOSE"
 	default:
 		return ""
 	}
