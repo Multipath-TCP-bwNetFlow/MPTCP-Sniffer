@@ -23,15 +23,23 @@ var (
 	networkInf = flag.String("inf", "en0", "network interface to sniff on")
 	logFile    = flag.String("log", "./mptcp_sniffer.log", "Location of the log file.")
 	logPackets = flag.Bool("logPackets", true, "Should packets be locked.")
+
+	interval = flag.Uint("interval", 60, "Should packets be locked.")
 )
 
 var kafkaConnection Connector
 
 func main() {
-	prepareLogger()
-	initKafka()
+	logfile := prepareLogger()
+	if logfile == nil{
+		return
+	}
+	defer logfile.Close()
 
-	Sniff(*networkInf, cb)
+	batchProcessor := CreateBatchProcessor(1000 * (*interval), cb)
+	defer batchProcessor.Stop()
+	initKafka()
+	Sniff(*networkInf, batchProcessor.Insert) // blocks
 }
 
 func cb(msg *mptcp.MPTCPMessage) {
@@ -42,18 +50,18 @@ func cb(msg *mptcp.MPTCPMessage) {
 	kafkaConnection.ProducerChannel(*kafkaOutTopic) <- msg
 }
 
-func prepareLogger() {
+func prepareLogger() * os.File{
 	flag.Parse()
 	var err error
 	logfile, err := os.OpenFile(*logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		println("Error opening file for logging: %v", err)
-		return
+		return nil
 	}
-	defer logfile.Close()
 	mw := io.MultiWriter(os.Stdout, logfile)
 	log.SetOutput(mw)
 	log.Println("-------------------------- Started.")
+	return logfile
 }
 
 func initKafka() {
