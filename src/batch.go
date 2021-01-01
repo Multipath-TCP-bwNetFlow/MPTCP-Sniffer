@@ -57,21 +57,20 @@ func flush(processCB Process, bp * BatchProcessor) {
 	if _currentStack == 1 {
 		atomic.StoreInt32(&bp.currentStack, 2)
 		time.Sleep(100) // await edge case if item is currently appended to stack
-		processStack(bp.stack1, processCB)
+		bp.stack1 = processStack(bp.stack1, processCB)
 	} else {
 		atomic.StoreInt32(&bp.currentStack, 1)
 		time.Sleep(100) // await edge case if item is currently appended to stack
-		processStack(bp.stack2, processCB)
+		bp.stack2 = processStack(bp.stack2, processCB)
 	}
 }
 
-func processStack(stack [] *mptcp.MPTCPMessage, processCB Process) {
+func processStack(stack []*mptcp.MPTCPMessage, processCB Process) []*mptcp.MPTCPMessage {
 	flows := make([]*mptcp.MPTCPMessage, 0)
 	for len(stack) > 0 {
 		topIdx := len(stack) - 1
 		packet := stack[topIdx]
 		found := false
-
 		for _, flow := range flows {
 			if compareMPTCPMessages(packet, flow) {
 				addOptionIfNotPresent(flow, packet)
@@ -79,18 +78,16 @@ func processStack(stack [] *mptcp.MPTCPMessage, processCB Process) {
 				break
 			}
 		}
-
 		if !found {
 			flows = append(flows, packet)
-
 		}
-
 		stack = stack[:topIdx]
 	}
 
 	for _, flow := range flows {
 		processCB(flow)
 	}
+	return stack
 }
 
 func compareMPTCPMessages(f1, f2 *mptcp.MPTCPMessage) bool{
