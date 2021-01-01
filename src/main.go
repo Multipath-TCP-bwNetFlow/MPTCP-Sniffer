@@ -36,7 +36,7 @@ func main() {
 	}
 	defer logfile.Close()
 
-	batchProcessor := CreateBatchProcessor(1000 * (*interval), cb)
+	batchProcessor := CreateBatchProcessor(*interval, cb)
 	defer batchProcessor.Stop()
 	initKafka()
 	Sniff(*networkInf, batchProcessor.Insert) // blocks
