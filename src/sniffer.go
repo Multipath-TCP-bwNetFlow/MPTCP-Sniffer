@@ -6,6 +6,7 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"mptcp_sniffer/proto/github.com/protobuf/types/mptcp"
+	"time"
 )
 
 type Send func(*mptcp.MPTCPMessage)
@@ -70,6 +71,7 @@ func createMessage(srcAdr, dstAdr string, srcPort, dstPort layers.TCPPort, seqNu
 	message.SrcPort = uint32(srcPort)
 	message.DstPort = uint32(dstPort)
 	message.SeqNum = seqNum
+	message.TimestampCaptured = time.Now().Unix()
 	message.MptcpOptions = options
 	return message
 }
