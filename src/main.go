@@ -22,7 +22,7 @@ var (
 
 	networkInf = flag.String("inf", "en0", "network interface to sniff on")
 	logFile    = flag.String("log", "./mptcp_sniffer.log", "Location of the log file.")
-	logPackets = flag.Bool("logPackets", true, "Should packets be locked.")
+	logPackets = flag.Bool("logPackets", true, "Should packets be logged.")
 
 	interval = flag.Uint("interval", 60, "Should packets be locked.")
 )
@@ -31,7 +31,7 @@ var kafkaConnection Connector
 
 func main() {
 	logfile := prepareLogger()
-	if logfile == nil{
+	if logfile == nil {
 		return
 	}
 	defer logfile.Close()
@@ -50,7 +50,7 @@ func cb(msg *mptcp.MPTCPMessage) {
 	kafkaConnection.ProducerChannel(*kafkaOutTopic) <- msg
 }
 
-func prepareLogger() * os.File{
+func prepareLogger() *os.File {
 	flag.Parse()
 	var err error
 	logfile, err := os.OpenFile(*logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
