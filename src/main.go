@@ -36,6 +36,8 @@ func main() {
 	}
 	defer logfile.Close()
 
+	log.Println("Write packets to: " + *kafkaOutTopic)
+
 	batchProcessor := CreateBatchProcessor(*interval, cb)
 	defer batchProcessor.Stop()
 	initKafka()
