@@ -110,7 +110,7 @@ func (connector *Connector) StartProducer(broker string) error {
 	config.Producer.Compression = sarama.CompressionSnappy   // Compress messages
 	config.Producer.Flush.Frequency = 500 * time.Millisecond // Flush batches every 500ms
 	config.Producer.Return.Successes = false                 // this would block until we've read the ACK, just don't
-	config.Producer.Return.Errors = false                    // TODO: make configurable as logging feature
+	config.Producer.Return.Errors = true                     // TODO: make configurable as logging feature
 
 	connector.producerChannels = make(map[string](chan *mptcp.MPTCPMessage))
 	connector.producerWg = &sync.WaitGroup{}
@@ -136,7 +136,6 @@ func (connector *Connector) ProducerChannel(topic string) chan *mptcp.MPTCPMessa
 					log.Printf("Kafka Producer: Could not encode message to topic %s with error '%v'", topic, err)
 					continue
 				}
-				log.Printf("TO KAFKA")
 				connector.producer.Input() <- &sarama.ProducerMessage{
 					Topic:     topic,
 					Timestamp: time.Unix(message.TimestampCaptured, 0),
@@ -145,6 +144,15 @@ func (connector *Connector) ProducerChannel(topic string) chan *mptcp.MPTCPMessa
 			}
 			log.Printf("Kafka Producer: Terminating topic %s, channel has closed", topic)
 			connector.producerWg.Done()
+		}()
+
+		go func() {
+			for {
+				select {
+				case err := <-connector.producer.Errors():
+					log.Println(err)
+				}
+			}
 		}()
 	}
 	return connector.producerChannels[topic]
