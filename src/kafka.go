@@ -138,9 +138,9 @@ func (connector *Connector) ProducerChannel(topic string) chan *mptcp.MPTCPMessa
 				}
 				log.Printf("TO KAFKA")
 				connector.producer.Input() <- &sarama.ProducerMessage{
-					Topic: topic,
-					// Timestamp: time.Unix(message.TimestampCaptured, 0),
-					Value: sarama.ByteEncoder(binary),
+					Topic:     topic,
+					Timestamp: time.Unix(message.TimestampCaptured, 0),
+					Value:     sarama.ByteEncoder(binary),
 				}
 			}
 			log.Printf("Kafka Producer: Terminating topic %s, channel has closed", topic)
